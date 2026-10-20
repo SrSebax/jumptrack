@@ -9,7 +9,7 @@ export function JumperIllustration() {
       <path
         d="M30 58c-6 18-2 34 8 38 6 3 18 3 24 0 10-4 14-20 8-38"
         fill="none"
-        stroke="var(--lime)"
+        stroke="var(--accent-ring)"
         strokeWidth="3.5"
         strokeLinecap="round"
         strokeDasharray="6 6"

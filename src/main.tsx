@@ -5,7 +5,9 @@ import '@fontsource-variable/manrope'
 import '@fontsource-variable/space-grotesk'
 import './index.css'
 import { installBackButton } from './lib/device'
+import { applyTheme, getTheme } from './lib/theme'
 
+applyTheme(getTheme())
 installBackButton()
 
 createRoot(document.getElementById('root')!).render(

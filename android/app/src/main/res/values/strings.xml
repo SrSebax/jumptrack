@@ -4,4 +4,6 @@
     <string name="title_activity_main">JumpTrack</string>
     <string name="package_name">com.drako.jumptrack</string>
     <string name="custom_url_scheme">com.drako.jumptrack</string>
+    <string name="widget_name">Racha</string>
+    <string name="widget_description">Tu racha de días saltando y los días de esta semana</string>
 </resources>
