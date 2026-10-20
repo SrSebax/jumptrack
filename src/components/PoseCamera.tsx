@@ -17,15 +17,23 @@ export function PoseCamera({ facingMode, onPose, onReady }: Props) {
   const onReadyRef = useRef(onReady)
   const [status, setStatus] = useState<Status>('loading')
   const [attempt, setAttempt] = useState(0)
+  const [visible, setVisible] = useState(() => document.visibilityState === 'visible')
 
   useEffect(() => {
     onPoseRef.current = onPose
     onReadyRef.current = onReady
   })
 
+  // Al ir a segundo plano el sistema corta la cámara: se suelta y se vuelve a abrir al regresar.
+  useEffect(() => {
+    const onChange = () => setVisible(document.visibilityState === 'visible')
+    document.addEventListener('visibilitychange', onChange)
+    return () => document.removeEventListener('visibilitychange', onChange)
+  }, [])
+
   useEffect(() => {
     const video = videoRef.current
-    if (!video) return
+    if (!video || !visible) return
     let cancelled = false
     let stream: MediaStream | null = null
     let frame = 0
@@ -37,7 +45,10 @@ export function PoseCamera({ facingMode, onPose, onReady }: Props) {
           video: { facingMode, width: { ideal: 640 }, height: { ideal: 480 } },
           audio: false,
         })
-        if (cancelled) return
+        if (cancelled) {
+          stream.getTracks().forEach((track) => track.stop())
+          return
+        }
         video.srcObject = stream
         await video.play()
         if (cancelled) return
@@ -69,7 +80,7 @@ export function PoseCamera({ facingMode, onPose, onReady }: Props) {
       cancelAnimationFrame(frame)
       stream?.getTracks().forEach((track) => track.stop())
     }
-  }, [facingMode, attempt])
+  }, [facingMode, attempt, visible])
 
   return (
     <>
