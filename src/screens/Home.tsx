@@ -1,7 +1,7 @@
-import { Check, Flame, ListOrdered, Play, Settings } from 'lucide-react'
+import { Check, ChevronRight, CloudOff, Flame, ListOrdered, Play, Settings } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { Avatar } from '../components/Avatar'
-import { useCloud } from '../lib/cloud'
+import { signInWithGoogle, useCloud } from '../lib/cloud'
 import { fromEpochDay, weekStart } from '../lib/dates'
 import { formatDate, formatNumber, pluralDays } from '../lib/format'
 import { useDailyGoal } from '../lib/settings'
@@ -14,7 +14,7 @@ export function Home() {
   const stats = useStats()
   const dailyGoal = useDailyGoal()
   const navigate = useNavigate()
-  const { user } = useCloud()
+  const { ready, user } = useCloud()
   const firstName = user?.name?.split(' ')[0]
   const monday = weekStart(stats.today)
   const progress = Math.min(1, stats.todayJumps / dailyGoal)
@@ -36,6 +36,14 @@ export function Home() {
           </button>
         )}
       </header>
+
+      {ready && !user && (
+        <button className="card backup-banner" onClick={() => void signInWithGoogle()}>
+          <CloudOff size={20} />
+          <span>Inicia sesión para respaldar tus saltos</span>
+          <ChevronRight size={20} />
+        </button>
+      )}
 
       <section className="card streak-card">
         <div className="streak-head">

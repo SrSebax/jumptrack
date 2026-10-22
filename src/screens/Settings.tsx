@@ -1,4 +1,4 @@
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Globe } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Avatar } from '../components/Avatar'
@@ -116,6 +116,30 @@ export function SettingsScreen() {
       ) : (
         <p className="muted small">Te avisa si aún no llegas a tu meta del día. Si ya la cumpliste, no suena.</p>
       )}
+
+      <footer className="credits">
+        <p className="muted small">Hecho por</p>
+        <strong>Sebastian Londoño</strong>
+        <div className="credits-links">
+          <a className="nav-circle" href="https://sebaslondev-portfolio.vercel.app" target="_blank" rel="noreferrer" aria-label="Sitio web">
+            <Globe size={20} />
+          </a>
+          <a className="nav-circle" href="https://instagram.com/sebax_lond" target="_blank" rel="noreferrer" aria-label="Instagram">
+            <InstagramIcon />
+          </a>
+        </div>
+      </footer>
     </main>
+  )
+}
+
+/** lucide-react ya no incluye logos de marcas. */
+function InstagramIcon() {
+  return (
+    <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="2" y="2" width="20" height="20" rx="5" />
+      <circle cx="12" cy="12" r="4" />
+      <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
+    </svg>
   )
 }

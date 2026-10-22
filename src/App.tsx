@@ -1,6 +1,7 @@
 import { CalendarDays, House, Timer } from 'lucide-react'
 import { lazy, Suspense } from 'react'
 import { BrowserRouter, NavLink, Outlet, Route, Routes } from 'react-router-dom'
+import { useCloud, useLoginSkipped } from './lib/cloud'
 import { useReminderSync } from './lib/reminder'
 import { useWidgetSync } from './lib/widget'
 import { Calendar } from './screens/Calendar'
@@ -8,6 +9,7 @@ import { Home } from './screens/Home'
 import { SettingsScreen } from './screens/Settings'
 import { SeriesSetup } from './screens/SeriesSetup'
 import { Summary } from './screens/Summary'
+import { Welcome } from './screens/Welcome'
 
 // MediaPipe es pesado: solo se descarga al entrar a entrenar.
 const Training = lazy(() => import('./screens/Training').then((m) => ({ default: m.Training })))
@@ -37,6 +39,13 @@ function TabLayout() {
 export default function App() {
   useWidgetSync()
   useReminderSync()
+  const cloud = useCloud()
+  const loginSkipped = useLoginSkipped()
+
+  // Mientras se restaura la sesión no se pinta nada, para no mostrar el login un instante a quien ya entró.
+  if (!cloud.ready || loginSkipped === undefined) return null
+  if (!cloud.user && !loginSkipped) return <Welcome />
+
   return (
     <BrowserRouter>
       <Routes>

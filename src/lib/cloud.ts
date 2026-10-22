@@ -13,6 +13,7 @@ import {
   type User,
 } from 'firebase/auth'
 import { collection, doc, getDocsFromServer, initializeFirestore, writeBatch } from 'firebase/firestore'
+import { useLiveQuery } from 'dexie-react-hooks'
 import { useSyncExternalStore } from 'react'
 import { db, type Workout } from '../db'
 
@@ -60,6 +61,18 @@ export function initCloud() {
     set({ ready: true, user: user && { name: user.displayName, email: user.email, photoUrl: user.photoURL }, error: null })
     if (user) void syncWorkouts()
   })
+}
+
+const SKIP_KEY = 'loginSkipped'
+
+/** true si el usuario eligió "Continuar sin cuenta"; undefined mientras carga. */
+export function useLoginSkipped(): boolean | undefined {
+  const skipped = useLiveQuery(async () => (await db.settings.get(SKIP_KEY)) ?? null, [])
+  return skipped === undefined ? undefined : skipped !== null
+}
+
+export function skipLogin(): Promise<unknown> {
+  return db.settings.put({ key: SKIP_KEY, value: 1 })
 }
 
 export async function signInWithGoogle() {
