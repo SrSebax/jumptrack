@@ -1,5 +1,7 @@
 import { Check, Flame, ListOrdered, Play, Settings } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { Avatar } from '../components/Avatar'
+import { useCloud } from '../lib/cloud'
 import { fromEpochDay, weekStart } from '../lib/dates'
 import { formatDate, formatNumber, pluralDays } from '../lib/format'
 import { useDailyGoal } from '../lib/settings'
@@ -12,6 +14,8 @@ export function Home() {
   const stats = useStats()
   const dailyGoal = useDailyGoal()
   const navigate = useNavigate()
+  const { user } = useCloud()
+  const firstName = user?.name?.split(' ')[0]
   const monday = weekStart(stats.today)
   const progress = Math.min(1, stats.todayJumps / dailyGoal)
 
@@ -20,11 +24,17 @@ export function Home() {
       <header className="home-header">
         <div>
           <p className="muted">{formatDate(fromEpochDay(stats.today), { weekday: 'long', day: 'numeric', month: 'long' })}</p>
-          <h1>¡A saltar!</h1>
+          <h1>{firstName ? `¡A saltar, ${firstName}!` : '¡A saltar!'}</h1>
         </div>
-        <button className="icon-btn outlined" onClick={() => navigate('/settings')} aria-label="Ajustes">
-          <Settings size={22} />
-        </button>
+        {user ? (
+          <button className="avatar-btn" onClick={() => navigate('/settings')} aria-label="Perfil y ajustes">
+            <Avatar name={user.name} photoUrl={user.photoUrl} size={52} />
+          </button>
+        ) : (
+          <button className="icon-btn outlined" onClick={() => navigate('/settings')} aria-label="Ajustes">
+            <Settings size={22} />
+          </button>
+        )}
       </header>
 
       <section className="card streak-card">

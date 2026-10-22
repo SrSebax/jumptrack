@@ -135,6 +135,7 @@ function MainDisplay({
   let value: string
   let label: string
   let progress: number | null = null
+  const rest = shown === 'rest'
 
   if (s.phase === 'waiting') {
     value = '0'
@@ -142,10 +143,10 @@ function MainDisplay({
   } else if (shown === 'ready') {
     value = String(Math.ceil(s.countdownMs / 1000))
     label = 'Prepárate'
-  } else if (shown === 'rest') {
+  } else if (rest) {
     value = formatClock(s.restRemainingMs + 999)
     label = `Descanso · sigue la serie ${s.setsCompleted + 1}`
-    progress = 1 - s.restRemainingMs / (config.restSeconds * 1000)
+    progress = 1 - s.restRemainingMs / s.restTotalMs
   } else if (session.isSeries) {
     value = String(s.setJumps)
     if (config.goalType === 'JUMPS') {
@@ -162,8 +163,20 @@ function MainDisplay({
   }
 
   return (
-    <div className={`main-display${shown === 'rest' ? ' rest' : ''}`}>
-      <div className="big-counter">{value}</div>
+    <div className={`main-display${rest ? ' rest' : ''}`}>
+      {rest ? (
+        <div className="rest-adjust">
+          <button className="step-btn" onClick={() => session.adjustRest(-5)} aria-label="Restar 5 segundos de descanso">
+            −5s
+          </button>
+          <div className="big-counter">{value}</div>
+          <button className="step-btn" onClick={() => session.adjustRest(5)} aria-label="Sumar 5 segundos de descanso">
+            +5s
+          </button>
+        </div>
+      ) : (
+        <div className="big-counter">{value}</div>
+      )}
       <div className={paused ? 'paused-label' : 'muted'}>{paused ? 'En pausa' : label}</div>
       {progress !== null && (
         <div className="progress lime">

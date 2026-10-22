@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "516673540226",
+    "project_id": "jumptrack-app",
+    "storage_bucket": "jumptrack-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:516673540226:android:ac533ac8006110987b649b",
+        "android_client_info": {
+          "package_name": "com.drako.jumptrack"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "516673540226-r0qiv18jp63jf47dp5anql9graer6m0t.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.drako.jumptrack",
+            "certificate_hash": "94cc02448a56be57e2546b4c338ed62c37941173"
+          }
+        },
+        {
+          "client_id": "516673540226-m2q2g03n5feisruv98ibu6ij6v2untmc.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAh2rshgiFLp5ffOAykCol36upbFDUkGck"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "516673540226-m2q2g03n5feisruv98ibu6ij6v2untmc.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

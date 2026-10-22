@@ -20,11 +20,18 @@ export interface Workout {
   bestMinute?: number
   /** Saltos y tiempo de cada serie completada (solo modo series). */
   setDetails?: SetDetail[]
+  /** Última edición manual (epoch millis), para resolver conflictos al sincronizar. */
+  updatedAt?: number
 }
 
 export interface SetDetail {
   jumps: number
   durationMs: number
+}
+
+/** Entrenamiento borrado que falta avisar a la nube. */
+export interface DeletedWorkout {
+  startedAt: number
 }
 
 export interface Setting {
@@ -35,6 +42,7 @@ export interface Setting {
 export const db = new Dexie('jumptrack') as Dexie & {
   workouts: EntityTable<Workout, 'id'>
   settings: EntityTable<Setting, 'key'>
+  deletedWorkouts: EntityTable<DeletedWorkout, 'startedAt'>
 }
 
 db.version(1).stores({
@@ -43,3 +51,18 @@ db.version(1).stores({
 db.version(2).stores({
   settings: '&key',
 })
+db.version(3).stores({
+  deletedWorkouts: '&startedAt',
+})
+
+/** Corrige los saltos de un entrenamiento (la cámara a veces cuenta de más o de menos). */
+export function updateWorkoutJumps(id: number, jumps: number): Promise<unknown> {
+  return db.workouts.update(id, { jumps, updatedAt: Date.now() })
+}
+
+export function deleteWorkout(workout: Workout): Promise<unknown> {
+  return db.transaction('rw', db.workouts, db.deletedWorkouts, async () => {
+    await db.workouts.delete(workout.id)
+    await db.deletedWorkouts.put({ startedAt: workout.startedAt })
+  })
+}

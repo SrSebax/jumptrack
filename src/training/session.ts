@@ -1,5 +1,6 @@
 import type { NormalizedLandmark } from '@mediapipe/tasks-vision'
 import { db, type SetDetail } from '../db'
+import { syncWorkouts } from '../lib/cloud'
 import { todayEpochDay } from '../lib/dates'
 import { bestInWindow } from '../lib/records'
 import { speak } from '../lib/voice'
@@ -20,6 +21,8 @@ export interface TrainingState {
   setElapsedMs: number
   countdownMs: number
   restRemainingMs: number
+  /** Duración total del descanso actual (cambia al ajustarlo con ±5 s). */
+  restTotalMs: number
   bodyDetected: boolean
   savedId: number | null
   discarded: boolean
@@ -28,6 +31,7 @@ export interface TrainingState {
 const TICK_MS = 100
 const COUNTDOWN_MS = 4_000
 const ANNOUNCE_EVERY = 50
+const MAX_REST_MS = 600_000
 
 /**
  * Máquina de estados del entrenamiento, independiente de React.
@@ -46,6 +50,7 @@ export class TrainingSession {
     setElapsedMs: 0,
     countdownMs: 0,
     restRemainingMs: 0,
+    restTotalMs: 0,
     bodyDetected: false,
     savedId: null,
     discarded: false,
@@ -126,6 +131,15 @@ export class TrainingSession {
     else if (this.state.phase === 'active' && this.isSeries) this.completeSet()
   }
 
+  /** Suma o resta segundos al descanso en curso (también en pausa). Si llega a 0, empieza la serie. */
+  adjustRest = (deltaSeconds: number) => {
+    const s = this.state
+    if (s.phase !== 'rest' && !(s.phase === 'paused' && s.pausedFrom === 'rest')) return
+    const restRemainingMs = Math.min(MAX_REST_MS, Math.max(0, s.restRemainingMs + deltaSeconds * 1000))
+    const restTotalMs = Math.max(restRemainingMs, s.restTotalMs + Math.max(0, deltaSeconds) * 1000)
+    this.set({ restRemainingMs, restTotalMs })
+  }
+
   finish = () => {
     const s = this.state
     if (s.phase === 'finished') return
@@ -148,7 +162,10 @@ export class TrainingSession {
         bestMinute: bestInWindow(this.jumpTimes, 60_000),
         setDetails: this.isSeries ? this.setDetails : undefined,
       })
-      .then((id) => this.set({ savedId: id }))
+      .then((id) => {
+        this.set({ savedId: id })
+        void syncWorkouts()
+      })
   }
 
   private tick() {
@@ -212,7 +229,8 @@ export class TrainingSession {
       this.set({ setsCompleted: done, currentSet: done + 1, setJumps: 0, setElapsedMs: 0 })
     } else {
       speak(`Serie ${done} completada. Descanso`)
-      this.set({ setsCompleted: done, phase: 'rest', restRemainingMs: this.config.restSeconds * 1000 })
+      const restMs = this.config.restSeconds * 1000
+      this.set({ setsCompleted: done, phase: 'rest', restRemainingMs: restMs, restTotalMs: restMs })
     }
   }
 

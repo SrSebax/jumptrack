@@ -29,6 +29,8 @@ export function Calendar() {
   const inStreak = (day: number) => day <= streakEnd && day > streakEnd - stats.currentStreak
 
   const dayWorkouts = stats.workouts.filter((w) => w.epochDay === selected)
+  const dayJumps = dayWorkouts.reduce((sum, w) => sum + w.jumps, 0)
+  const dayDurationMs = dayWorkouts.reduce((sum, w) => sum + w.durationMs, 0)
   const dayLabel =
     (selected === stats.today ? 'Hoy, ' : '') +
     formatDate(fromEpochDay(selected), selected === stats.today ? { day: 'numeric', month: 'long' } : { weekday: 'long', day: 'numeric', month: 'long' })
@@ -111,6 +113,18 @@ export function Calendar() {
         </div>
       </section>
 
+      {dayWorkouts.length > 0 && (
+        <section className="card day-card day-total">
+          <div>
+            <p className="muted">
+              {dayLabel} · {dayWorkouts.length === 1 ? '1 entrenamiento' : `${dayWorkouts.length} entrenamientos`}
+            </p>
+            <strong>Total: {formatNumber(dayJumps)} saltos</strong>
+          </div>
+          <span className="day-time">{formatClock(dayDurationMs)}</span>
+        </section>
+      )}
+
       {dayWorkouts.length === 0 ? (
         <section className="card day-card">
           <div>
@@ -122,10 +136,7 @@ export function Calendar() {
         dayWorkouts.map((w) => (
           <button key={w.id} className="card day-card" onClick={() => navigate(`/summary/${w.id}`)}>
             <div>
-              <p className="muted">
-                {dayLabel}
-                {dayWorkouts.length > 1 && ` · ${formatDate(new Date(w.startedAt), { hour: '2-digit', minute: '2-digit' })}`}
-              </p>
+              <p className="muted">{formatDate(new Date(w.startedAt), { hour: '2-digit', minute: '2-digit' })}</p>
               <strong>
                 {formatNumber(w.jumps)} saltos · {w.setsPlanned === 0 ? 'libre' : `${w.setsCompleted} series`}
               </strong>

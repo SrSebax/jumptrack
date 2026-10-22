@@ -665,6 +665,19 @@ button:disabled {
   font-size: min(110px, 26vw);
 }
 
+.rest-adjust {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.rest-adjust .step-btn {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 700;
+}
+
 .main-display .progress {
   width: 100%;
   margin-top: 16px;
@@ -853,6 +866,35 @@ button:disabled {
   margin-top: auto;
 }
 
+.summary-edit {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.danger-text {
+  color: var(--danger);
+}
+
+.number-input {
+  width: 100%;
+  min-height: 64px;
+  padding: 0 20px;
+  border-radius: 18px;
+  border: 1.5px solid var(--outline);
+  background: var(--surface);
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.number-input:focus {
+  outline: none;
+  border-color: var(--lime);
+}
+
 .counter-label {
   font-size: 18px;
   font-weight: 800;
@@ -1013,11 +1055,71 @@ button:disabled {
   font-size: 18px;
 }
 
+.day-total {
+  border-color: var(--lime);
+}
+
 .day-time {
   font-family: var(--font-display);
   color: var(--accent-text);
   font-weight: 700;
   font-size: 17px;
+}
+
+/* ---------- Settings ---------- */
+
+.account-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.profile {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.profile > div {
+  min-width: 0;
+}
+
+.profile strong {
+  display: block;
+  font-size: 19px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.avatar {
+  display: grid;
+  place-items: center;
+  flex: none;
+  overflow: hidden;
+  border-radius: 50%;
+  background: var(--lime-dim);
+  color: var(--accent-text);
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-btn {
+  flex: none;
+  border-radius: 50%;
+  border: 2px solid var(--lime);
+  padding: 2px;
+}
+
+.error-text {
+  color: var(--danger);
 }
 
 /* ---------- Dialog ---------- */

@@ -25,3 +25,9 @@ dist-ssr
 
 # Copiado desde node_modules por scripts/copy-mediapipe.mjs
 public/mediapipe/
+
+# Tests
+coverage/
+
+# Firebase CLI (caché de deploys y logs)
+.firebase/

@@ -1,6 +1,7 @@
 import { CalendarDays, House, Timer } from 'lucide-react'
 import { lazy, Suspense } from 'react'
 import { BrowserRouter, NavLink, Outlet, Route, Routes } from 'react-router-dom'
+import { useReminderSync } from './lib/reminder'
 import { useWidgetSync } from './lib/widget'
 import { Calendar } from './screens/Calendar'
 import { Home } from './screens/Home'
@@ -35,6 +36,7 @@ function TabLayout() {
 
 export default function App() {
   useWidgetSync()
+  useReminderSync()
   return (
     <BrowserRouter>
       <Routes>

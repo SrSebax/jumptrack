@@ -1,7 +1,10 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Check, Flame } from 'lucide-react'
+import { Check, Flame, Pencil, Trash2 } from 'lucide-react'
+import { useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
-import { db, type Workout } from '../db'
+import { ConfirmDialog } from '../components/ConfirmDialog'
+import { db, deleteWorkout, updateWorkoutJumps, type Workout } from '../db'
+import { syncWorkouts } from '../lib/cloud'
 import { formatClock, formatDate, formatMinSec, formatNumber, jumpsPerMinute, pluralDays } from '../lib/format'
 import { useStats } from '../lib/useStats'
 
@@ -11,6 +14,7 @@ export function Summary() {
   const fromTraining = (useLocation().state as { fromTraining?: boolean } | null)?.fromTraining
   const workout = useLiveQuery(() => db.workouts.get(Number(id)), [id])
   const { currentStreak } = useStats()
+  const [dialog, setDialog] = useState<'edit' | 'delete' | null>(null)
 
   return (
     <main className="screen summary">
@@ -53,6 +57,40 @@ export function Summary() {
           </div>
 
           <SetBreakdown workout={workout} />
+
+          <div className="summary-edit">
+            <button className="btn btn-outline" onClick={() => setDialog('edit')}>
+              <Pencil size={18} /> Corregir saltos
+            </button>
+            <button className="btn btn-outline danger-text" onClick={() => setDialog('delete')}>
+              <Trash2 size={18} /> Borrar
+            </button>
+          </div>
+
+          {dialog === 'edit' && (
+            <EditJumpsDialog
+              initial={workout.jumps}
+              onCancel={() => setDialog(null)}
+              onSave={(jumps) => {
+                setDialog(null)
+                void updateWorkoutJumps(workout.id, jumps).then(() => syncWorkouts())
+              }}
+            />
+          )}
+          {dialog === 'delete' && (
+            <ConfirmDialog
+              title="¿Borrar entrenamiento?"
+              message={`Se borrarán ${formatNumber(workout.jumps)} saltos de este celular y de la nube. No se puede deshacer.`}
+              confirmLabel="Borrar"
+              onCancel={() => setDialog(null)}
+              onConfirm={() => {
+                setDialog(null)
+                if (fromTraining) navigate('/', { replace: true })
+                else navigate(-1)
+                void deleteWorkout(workout).then(() => syncWorkouts())
+              }}
+            />
+          )}
         </>
       )}
       {workout === null && <p className="muted center">Entrenamiento no encontrado.</p>}
@@ -106,5 +144,37 @@ function SetBreakdown({ workout }: { workout: Workout }) {
         )
       })}
     </section>
+  )
+}
+
+function EditJumpsDialog({ initial, onSave, onCancel }: { initial: number; onSave: (jumps: number) => void; onCancel: () => void }) {
+  const [text, setText] = useState(String(initial))
+  const jumps = Number(text)
+  const valid = text !== '' && Number.isInteger(jumps) && jumps > 0 && jumps <= 100_000
+
+  return (
+    <div className="dialog-backdrop" onClick={onCancel}>
+      <div className="dialog" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+        <h2>Corregir saltos</h2>
+        <p>Si la cámara contó de más o de menos, pon los saltos reales.</p>
+        <input
+          className="number-input"
+          type="number"
+          inputMode="numeric"
+          min={1}
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          autoFocus
+        />
+        <div className="dialog-actions">
+          <button className="btn btn-outline" onClick={onCancel}>
+            Cancelar
+          </button>
+          <button className="btn btn-primary" disabled={!valid} onClick={() => onSave(jumps)}>
+            Guardar
+          </button>
+        </div>
+      </div>
+    </div>
   )
 }
