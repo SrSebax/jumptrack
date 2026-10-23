@@ -3,6 +3,9 @@
   --cyan: #3dd9ff;
   --flame: #f28c4f;
   --flame-dim: #3b2a1e;
+  --cyan-dim: #163640;
+  --life: #ff5c8a;
+  --life-dim: #40202b;
   --danger: #ff4d5e;
   --bg: #0e0f12;
   --surface: #1a1c20;
@@ -39,6 +42,9 @@
   --cyan: #0a9cc0;
   --flame: #ef7a33;
   --flame-dim: #fde6d5;
+  --cyan-dim: #d9f3fa;
+  --life: #e23d6d;
+  --life-dim: #fde0e8;
   --danger: #e5394b;
   --bg: #f3f4ef;
   --surface: #ffffff;
@@ -396,6 +402,107 @@ button:disabled {
 .week-dot i.today {
   background: none;
   border: 2px dashed var(--flame);
+}
+
+.week-dot i.rest {
+  background: var(--cyan-dim);
+  color: var(--cyan);
+}
+
+.week-dot i.life {
+  background: var(--life-dim);
+  color: var(--life);
+}
+
+.rewards-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.rewards-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.rewards-head .points {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.rewards-head .points svg {
+  align-self: center;
+  color: var(--cyan);
+}
+
+.rewards-head .points strong {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.rewards-head .lives {
+  display: flex;
+  gap: 4px;
+  color: var(--muted);
+}
+
+.rewards-head .lives .full {
+  color: var(--life);
+}
+
+.wallet-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: auto;
+  align-self: flex-start;
+  padding: 6px 12px;
+  border-radius: 16px;
+  background: var(--surface-high);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.wallet-pill svg {
+  color: var(--cyan);
+}
+
+.wallet-pill .heart {
+  margin-left: 4px;
+  color: var(--life);
+}
+
+.rewards-card h3 {
+  margin: 0;
+  color: var(--text-soft);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.points-rules {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.points-rules li {
+  display: flex;
+  justify-content: space-between;
+}
+
+.points-rules strong {
+  color: var(--cyan);
+}
+
+.rewards-card .btn:disabled {
+  opacity: 0.45;
 }
 
 .today-card {
@@ -823,6 +930,18 @@ button:disabled {
   font-weight: 700;
 }
 
+.summary-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.points-chip {
+  background: var(--cyan-dim);
+  color: var(--cyan);
+}
+
 .summary-total {
   display: flex;
   flex-direction: column;
@@ -1004,6 +1123,19 @@ button:disabled {
   font-weight: 800;
 }
 
+.day.rest,
+.day.rest.future {
+  background: var(--cyan-dim);
+  color: var(--cyan);
+  font-weight: 800;
+}
+
+.day.life {
+  background: var(--life-dim);
+  color: var(--life);
+  font-weight: 800;
+}
+
 .day.future {
   color: var(--muted);
 }
@@ -1018,7 +1150,8 @@ button:disabled {
 
 .legend {
   display: flex;
-  gap: 18px;
+  flex-wrap: wrap;
+  gap: 8px 18px;
   color: var(--muted);
   font-size: 13px;
 }
@@ -1043,6 +1176,14 @@ button:disabled {
   background: var(--trained);
 }
 
+.legend i.rest {
+  background: var(--cyan);
+}
+
+.legend i.life {
+  background: var(--life);
+}
+
 .legend i.today {
   border: 2px solid var(--accent-ring);
 }
@@ -1063,6 +1204,25 @@ button:disabled {
 
 .day-card strong {
   font-size: 18px;
+}
+
+.rest-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 22px;
+  background: var(--cyan-dim);
+  color: var(--cyan);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.life-icon {
+  flex: none;
+  color: var(--life);
 }
 
 .day-total {

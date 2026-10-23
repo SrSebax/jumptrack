@@ -1,4 +1,4 @@
-import { Dexie, type EntityTable } from 'dexie'
+import { Dexie, type EntityTable, type Table } from 'dexie'
 
 export type GoalType = 'JUMPS' | 'TIME'
 
@@ -34,6 +34,23 @@ export interface DeletedWorkout {
   startedAt: number
 }
 
+export type DayMarkKind = 'rest' | 'life'
+
+/** Día sin entrenar que no rompe la racha: descanso planeado o vida gastada. */
+export interface DayMark {
+  epochDay: number
+  kind: DayMarkKind
+  updatedAt: number
+  /** Marca quitada (solo descansos); se guarda borrada para que la nube también la quite. */
+  deleted?: boolean
+}
+
+/** Vida comprada con puntos. Los puntos gastados son la suma de `cost`. */
+export interface LifePurchase {
+  createdAt: number
+  cost: number
+}
+
 export interface Setting {
   key: string
   value: number
@@ -43,6 +60,8 @@ export const db = new Dexie('jumptrack') as Dexie & {
   workouts: EntityTable<Workout, 'id'>
   settings: EntityTable<Setting, 'key'>
   deletedWorkouts: EntityTable<DeletedWorkout, 'startedAt'>
+  dayMarks: Table<DayMark, number>
+  lifePurchases: Table<LifePurchase, number>
 }
 
 db.version(1).stores({
@@ -53,6 +72,10 @@ db.version(2).stores({
 })
 db.version(3).stores({
   deletedWorkouts: '&startedAt',
+})
+db.version(4).stores({
+  dayMarks: '&epochDay',
+  lifePurchases: '&createdAt',
 })
 
 /** Corrige los saltos de un entrenamiento (la cámara a veces cuenta de más o de menos). */

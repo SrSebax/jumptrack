@@ -1,11 +1,12 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Check, Flame, Pencil, Trash2 } from 'lucide-react'
+import { Check, Flame, Gem, Pencil, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { db, deleteWorkout, updateWorkoutJumps, type Workout } from '../db'
-import { syncWorkouts } from '../lib/cloud'
+import { syncCloud } from '../lib/cloud'
 import { formatClock, formatDate, formatMinSec, formatNumber, jumpsPerMinute, pluralDays } from '../lib/format'
+import { workoutPoints } from '../lib/rewards'
 import { useStats } from '../lib/useStats'
 
 export function Summary() {
@@ -26,9 +27,14 @@ export function Summary() {
             </div>
             <h1>{fromTraining ? '¡Entrenamiento completado!' : 'Entrenamiento'}</h1>
             {fromTraining ? (
-              <span className="streak-chip">
-                <Flame size={16} /> Racha: {pluralDays(currentStreak)}
-              </span>
+              <div className="summary-chips">
+                <span className="streak-chip">
+                  <Flame size={16} /> Racha: {pluralDays(currentStreak)}
+                </span>
+                <span className="streak-chip points-chip">
+                  <Gem size={16} /> +{formatNumber(workoutPoints(workout))} puntos
+                </span>
+              </div>
             ) : (
               <p className="muted">
                 {formatDate(new Date(workout.startedAt), { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}
@@ -73,7 +79,7 @@ export function Summary() {
               onCancel={() => setDialog(null)}
               onSave={(jumps) => {
                 setDialog(null)
-                void updateWorkoutJumps(workout.id, jumps).then(() => syncWorkouts())
+                void updateWorkoutJumps(workout.id, jumps).then(() => syncCloud())
               }}
             />
           )}
@@ -87,7 +93,7 @@ export function Summary() {
                 setDialog(null)
                 if (fromTraining) navigate('/', { replace: true })
                 else navigate(-1)
-                void deleteWorkout(workout).then(() => syncWorkouts())
+                void deleteWorkout(workout).then(() => syncCloud())
               }}
             />
           )}

@@ -5,12 +5,18 @@ import { useTheme, type Theme } from './theme'
 import { useStats } from './useStats'
 
 export interface WidgetData {
-  /** Racha y el día en que termina, para que el widget la apague si pasa un día sin entrenar. */
+  /**
+   * Racha y el último día que la cubre, para que el widget la apague si pasa un día sin entrenar.
+   * Los descansos ya planeados y las vidas guardadas la alargan (la app gasta las vidas sola al abrirse).
+   */
   streak: number
   streakEndDay: number
   bestStreak: number
   /** Días entrenados de las últimas dos semanas (epochDay), para los puntos de la semana. */
   recentDays: number[]
+  /** Descansos y vidas usadas de las últimas dos semanas y los próximos días, que no sean días entrenados. */
+  restDays: number[]
+  lifeDays: number[]
   todayJumps: number
   today: number
   dailyGoal: number
@@ -25,12 +31,25 @@ export function useWidgetSync(): void {
   const dailyGoal = useDailyGoal()
   const theme = useTheme()
 
-  const recentDays = [...stats.dailyTotals]
-    .filter(([day, jumps]) => jumps > 0 && day > stats.today - 14)
-    .map(([day]) => day)
-    .sort((a, b) => a - b)
-  const streakEndDay = (stats.dailyTotals.get(stats.today) ?? 0) > 0 ? stats.today : stats.today - 1
-  const key = JSON.stringify([stats.currentStreak, streakEndDay, stats.bestStreak, recentDays, stats.todayJumps, dailyGoal, theme])
+  const recent = (days: Set<number>) =>
+    [...days].filter((day) => day > stats.today - 14 && !stats.trainedDays.has(day)).sort((a, b) => a - b)
+  const recentDays = [...stats.trainedDays].filter((day) => day > stats.today - 14).sort((a, b) => a - b)
+  const restDays = recent(stats.restDays)
+  const lifeDays = recent(stats.lifeDays)
+  let streakEndDay = stats.streakEnd
+  while (stats.restDays.has(streakEndDay + 1)) streakEndDay++
+  streakEndDay += stats.lives
+  const key = JSON.stringify([
+    stats.currentStreak,
+    streakEndDay,
+    stats.bestStreak,
+    recentDays,
+    restDays,
+    lifeDays,
+    stats.todayJumps,
+    dailyGoal,
+    theme,
+  ])
 
   useEffect(() => {
     if (!stats.loaded || !Capacitor.isNativePlatform()) return
@@ -39,6 +58,8 @@ export function useWidgetSync(): void {
       streakEndDay,
       bestStreak: stats.bestStreak,
       recentDays,
+      restDays,
+      lifeDays,
       todayJumps: stats.todayJumps,
       today: stats.today,
       dailyGoal,

@@ -1,8 +1,9 @@
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Heart, Moon } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { fromEpochDay, toEpochDay } from '../lib/dates'
 import { formatClock, formatDate, formatNumber } from '../lib/format'
+import { restsInWeek, setRestDay, useRestDaysPerWeek } from '../lib/rewards'
 import { useStats } from '../lib/useStats'
 
 const WEEK_DAYS = ['L', 'M', 'M', 'J', 'V', 'S', 'D']
@@ -10,6 +11,7 @@ const WEEK_DAYS = ['L', 'M', 'M', 'J', 'V', 'S', 'D']
 export function Calendar() {
   const stats = useStats()
   const navigate = useNavigate()
+  const restDaysPerWeek = useRestDaysPerWeek()
   const [month, setMonth] = useState(() => {
     const now = new Date()
     return new Date(now.getFullYear(), now.getMonth(), 1)
@@ -21,12 +23,12 @@ export function Calendar() {
   const daysInMonth = new Date(year, monthIndex + 1, 0).getDate()
   const offset = (month.getDay() + 6) % 7 // lunes primero
   const firstDay = toEpochDay(month)
-  const trained = (day: number) => (stats.dailyTotals.get(day) ?? 0) > 0
+  const trained = (day: number) => stats.trainedDays.has(day)
   const trainedThisMonth = Array.from({ length: daysInMonth }, (_, i) => firstDay + i).filter(trained).length
 
-  // Días de la racha actual: terminan hoy, o ayer si hoy aún no se ha entrenado.
-  const streakEnd = trained(stats.today) ? stats.today : stats.today - 1
-  const inStreak = (day: number) => day <= streakEnd && day > streakEnd - stats.currentStreak
+  // Días de la racha actual, con los descansos y vidas que la mantuvieron.
+  const inStreak = (day: number) => day >= stats.streakStart && day <= stats.streakEnd
+  const protectedKind = (day: number) => (trained(day) ? null : stats.lifeDays.has(day) ? 'life' : stats.restDays.has(day) ? 'rest' : null)
 
   const dayWorkouts = stats.workouts.filter((w) => w.epochDay === selected)
   const dayJumps = dayWorkouts.reduce((sum, w) => sum + w.jumps, 0)
@@ -83,9 +85,10 @@ export function Calendar() {
               streak && (column === 0 || !inStreak(day - 1)) && 'band-start',
               streak && (column === 6 || !inStreak(day + 1)) && 'band-end',
             ]
+            const kind = protectedKind(day)
             const dayClasses = [
               'day',
-              streak ? 'streak' : trained(day) && 'trained',
+              kind ?? (streak ? 'streak' : trained(day) && 'trained'),
               day > stats.today && 'future',
               day === stats.today && 'today',
               day === selected && day !== stats.today && 'selected',
@@ -106,6 +109,12 @@ export function Calendar() {
           </span>
           <span>
             <i className="trained" /> Entrenaste
+          </span>
+          <span>
+            <i className="rest" /> Descanso
+          </span>
+          <span>
+            <i className="life" /> Vida
           </span>
           <span>
             <i className="today" /> Hoy
@@ -129,8 +138,24 @@ export function Calendar() {
         <section className="card day-card">
           <div>
             <p className="muted">{dayLabel}</p>
-            <strong>Sin entrenamientos</strong>
+            <strong>
+              {protectedKind(selected) === 'life'
+                ? 'Racha salvada con una vida'
+                : protectedKind(selected) === 'rest'
+                  ? 'Día de descanso'
+                  : 'Sin entrenamientos'}
+            </strong>
           </div>
+          {protectedKind(selected) === 'life' ? (
+            <Heart className="life-icon" size={22} fill="currentColor" />
+          ) : (
+            selected >= stats.today &&
+            (stats.restDays.has(selected) || restsInWeek(stats.restDays, stats.trainedDays, selected) < restDaysPerWeek) && (
+              <button className="rest-toggle" onClick={() => void setRestDay(selected, !stats.restDays.has(selected))}>
+                <Moon size={16} /> {stats.restDays.has(selected) ? 'Quitar' : 'Descansar'}
+              </button>
+            )
+          )}
         </section>
       ) : (
         dayWorkouts.map((w) => (

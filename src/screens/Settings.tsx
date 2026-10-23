@@ -13,6 +13,7 @@ import {
   formatReminderTime,
   useReminderMinutes,
 } from '../lib/reminder'
+import { MAX_REST_DAYS_PER_WEEK, setRestDaysPerWeek, useRestDaysPerWeek } from '../lib/rewards'
 import { setDailyGoal, useDailyGoal } from '../lib/settings'
 import { setTheme, useTheme, type Theme } from '../lib/theme'
 
@@ -23,6 +24,7 @@ const REMINDER_STEP = 30
 export function SettingsScreen() {
   const navigate = useNavigate()
   const dailyGoal = useDailyGoal()
+  const restDaysPerWeek = useRestDaysPerWeek()
   const theme = useTheme()
   const cloud = useCloud()
   const reminder = useReminderMinutes()
@@ -89,6 +91,13 @@ export function SettingsScreen() {
         onMinus={() => void setDailyGoal(clamp(dailyGoal - 100))}
         onPlus={() => void setDailyGoal(clamp(dailyGoal + 100))}
       />
+      <Stepper
+        label="Días de descanso por semana"
+        value={String(restDaysPerWeek)}
+        onMinus={() => void setRestDaysPerWeek(Math.max(0, restDaysPerWeek - 1))}
+        onPlus={() => void setRestDaysPerWeek(Math.min(MAX_REST_DAYS_PER_WEEK, restDaysPerWeek + 1))}
+      />
+      <p className="muted small">Un día de descanso cuenta como día de racha. Márcalo desde Inicio o en el calendario.</p>
 
       <p className="field-label">Recordatorio diario</p>
       <Segmented<boolean>

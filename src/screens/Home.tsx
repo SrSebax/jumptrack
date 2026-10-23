@@ -1,4 +1,4 @@
-import { Check, ChevronRight, CloudOff, Flame, ListOrdered, Play, Settings } from 'lucide-react'
+import { Check, ChevronRight, CloudOff, Flame, Gem, Heart, ListOrdered, Moon, Play, Settings } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { Avatar } from '../components/Avatar'
 import { signInWithGoogle, useCloud } from '../lib/cloud'
@@ -18,6 +18,9 @@ export function Home() {
   const firstName = user?.name?.split(' ')[0]
   const monday = weekStart(stats.today)
   const progress = Math.min(1, stats.todayJumps / dailyGoal)
+
+  // Mientras carga la base de datos no se pinta la racha, para que no parpadee vacía.
+  if (!stats.loaded) return <main className="screen home" />
 
   return (
     <main className="screen home">
@@ -54,16 +57,34 @@ export function Home() {
             <div className="streak-days">{pluralDays(stats.currentStreak)}</div>
             <div className="muted">Racha actual · Mejor: {pluralDays(stats.bestStreak)}</div>
           </div>
+          <button className="wallet-pill" onClick={() => navigate('/rewards')} aria-label="Puntos y vidas">
+            <Gem size={16} />
+            {formatNumber(stats.points)}
+            <Heart size={16} className="heart" fill="currentColor" />
+            {stats.lives}
+          </button>
         </div>
         <div className="week-dots">
           {WEEK_DAYS.map((label, i) => {
             const day = monday + i
-            const trained = (stats.dailyTotals.get(day) ?? 0) > 0
-            const state = trained ? 'done' : day === stats.today ? 'today' : 'pending'
+            const trained = stats.trainedDays.has(day)
+            const state = trained
+              ? 'done'
+              : stats.lifeDays.has(day)
+                ? 'life'
+                : stats.restDays.has(day)
+                  ? 'rest'
+                  : day === stats.today
+                    ? 'today'
+                    : 'pending'
             return (
               <div key={i} className="week-dot">
                 <span className="muted">{label}</span>
-                <i className={state}>{trained && <Check size={18} strokeWidth={3} />}</i>
+                <i className={state}>
+                  {state === 'done' && <Check size={18} strokeWidth={3} />}
+                  {state === 'life' && <Heart size={16} fill="currentColor" />}
+                  {state === 'rest' && <Moon size={16} fill="currentColor" />}
+                </i>
               </div>
             )
           })}

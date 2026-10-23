@@ -20,9 +20,9 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
- * Widget "Racha": días seguidos entrenando y los días de esta semana.
+ * Widget "Racha": días seguidos entrenando y los días de esta semana (entrenados, descansos y vidas).
  * Los datos los escribe StreakWidgetPlugin; aquí solo se pintan, recalculando la racha
- * con la fecha actual para que se apague sola si pasa un día sin entrenar.
+ * con la fecha actual para que se apague sola si pasa un día sin entrenar ni descansar.
  */
 public class StreakWidgetProvider extends AppWidgetProvider {
 
@@ -87,6 +87,15 @@ public class StreakWidgetProvider extends AppWidgetProvider {
         return n == 1 ? "1 día" : n + " días";
     }
 
+    private static Set<Long> daySet(JSONObject data, String key) {
+        Set<Long> days = new HashSet<>();
+        JSONArray array = data.optJSONArray(key);
+        if (array != null) {
+            for (int i = 0; i < array.length(); i++) days.add(array.optLong(i));
+        }
+        return days;
+    }
+
     private static RemoteViews buildViews(Context context, boolean full) {
         JSONObject data;
         try {
@@ -97,15 +106,13 @@ public class StreakWidgetProvider extends AppWidgetProvider {
 
         long today = todayEpochDay();
         int streak = data.optInt("streak", 0);
-        // La racha sigue viva si terminó hoy o ayer.
+        // La racha sigue viva si su último día cubierto (entrenado, descanso o vida) es hoy o ayer.
         if (today - data.optLong("streakEndDay", Long.MIN_VALUE / 2) > 1) streak = 0;
         int best = Math.max(streak, data.optInt("bestStreak", 0));
 
-        Set<Long> trained = new HashSet<>();
-        JSONArray recent = data.optJSONArray("recentDays");
-        if (recent != null) {
-            for (int i = 0; i < recent.length(); i++) trained.add(recent.optLong(i));
-        }
+        Set<Long> trained = daySet(data, "recentDays");
+        Set<Long> rest = daySet(data, "restDays");
+        Set<Long> life = daySet(data, "lifeDays");
 
         boolean light = "light".equals(data.optString("theme"));
         int text = light ? 0xFF121417 : 0xFFFFFFFF;
@@ -125,6 +132,8 @@ public class StreakWidgetProvider extends AppWidgetProvider {
             long day = monday + i;
             int dot;
             if (trained.contains(day)) dot = R.drawable.widget_dot_done;
+            else if (life.contains(day)) dot = R.drawable.widget_dot_life;
+            else if (rest.contains(day)) dot = R.drawable.widget_dot_rest;
             else if (day == today) dot = R.drawable.widget_dot_today;
             else dot = light ? R.drawable.widget_dot_pending_light : R.drawable.widget_dot_pending_dark;
             views.setImageViewResource(DOT_IDS[i], dot);

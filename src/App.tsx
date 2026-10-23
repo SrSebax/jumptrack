@@ -3,9 +3,11 @@ import { lazy, Suspense } from 'react'
 import { BrowserRouter, NavLink, Outlet, Route, Routes } from 'react-router-dom'
 import { useCloud, useLoginSkipped } from './lib/cloud'
 import { useReminderSync } from './lib/reminder'
+import { useStreakGuard } from './lib/streakGuard'
 import { useWidgetSync } from './lib/widget'
 import { Calendar } from './screens/Calendar'
 import { Home } from './screens/Home'
+import { Rewards } from './screens/Rewards'
 import { SettingsScreen } from './screens/Settings'
 import { SeriesSetup } from './screens/SeriesSetup'
 import { Summary } from './screens/Summary'
@@ -39,6 +41,7 @@ function TabLayout() {
 export default function App() {
   useWidgetSync()
   useReminderSync()
+  useStreakGuard()
   const cloud = useCloud()
   const loginSkipped = useLoginSkipped()
 
@@ -55,6 +58,7 @@ export default function App() {
           <Route path="calendar" element={<Calendar />} />
         </Route>
         <Route path="settings" element={<SettingsScreen />} />
+        <Route path="rewards" element={<Rewards />} />
         <Route
           path="training"
           element={

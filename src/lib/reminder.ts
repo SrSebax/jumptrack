@@ -39,16 +39,17 @@ export function disableReminder(): Promise<unknown> {
   return db.settings.delete(KEY)
 }
 
-/** Reprograma las notificaciones cada vez que cambian los saltos de hoy, la meta, la racha o la hora. */
+/** Reprograma las notificaciones cada vez que cambian los saltos de hoy, la meta, la racha, la hora o los descansos. Los días de descanso no suenan. */
 export function useReminderSync(): void {
   const stats = useStats()
   const dailyGoal = useDailyGoal()
   const minutes = useReminderMinutes()
-  const key = JSON.stringify([stats.today, stats.todayJumps, stats.currentStreak, dailyGoal, minutes])
+  const restDays = [...stats.restDays].filter((day) => day >= stats.today && !stats.trainedDays.has(day))
+  const key = JSON.stringify([stats.today, stats.todayJumps, stats.currentStreak, dailyGoal, minutes, restDays])
 
   useEffect(() => {
     if (!stats.loaded || minutes === undefined || !Capacitor.isNativePlatform()) return
-    void schedule(minutes, stats.today, stats.todayJumps, stats.currentStreak, dailyGoal).catch(() => {
+    void schedule(minutes, stats.today, stats.todayJumps, stats.currentStreak, dailyGoal, new Set(restDays)).catch(() => {
       // Si falla (p. ej. sin permiso), la app sigue igual.
     })
     // `key` resume todos los datos: solo se reprograma cuando algo cambia.
@@ -56,7 +57,7 @@ export function useReminderSync(): void {
   }, [key, stats.loaded])
 }
 
-async function schedule(minutes: number | null, today: number, todayJumps: number, streak: number, goal: number) {
+async function schedule(minutes: number | null, today: number, todayJumps: number, streak: number, goal: number, restDays: Set<number>) {
   const ids = Array.from({ length: DAYS_AHEAD }, (_, i) => i + 1)
   await LocalNotifications.cancel({ notifications: ids.map((id) => ({ id })) })
   if (minutes === null) return
@@ -70,6 +71,7 @@ async function schedule(minutes: number | null, today: number, todayJumps: numbe
     at.setHours(Math.floor(minutes / 60), minutes % 60, 0, 0)
     if (at.getTime() <= now) continue
     if (i === 0 && todayJumps >= goal) continue
+    if (restDays.has(today + i)) continue
     notifications.push({ id: ids[i], channelId: CHANNEL, schedule: { at, allowWhileIdle: true }, ...message(i === 0, todayJumps, streak, goal) })
   }
   if (notifications.length > 0) await LocalNotifications.schedule({ notifications })

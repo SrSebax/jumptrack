@@ -12,7 +12,8 @@ import {
   signOut as firebaseSignOut,
   type User,
 } from 'firebase/auth'
-import { collection, doc, getDocsFromServer, initializeFirestore, writeBatch } from 'firebase/firestore'
+import { collection, doc, getDocsFromServer, initializeFirestore, writeBatch, type CollectionReference, type DocumentData } from 'firebase/firestore'
+import type { Table } from 'dexie'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useSyncExternalStore } from 'react'
 import { db, type Workout } from '../db'
@@ -59,7 +60,7 @@ export function useCloud(): CloudState {
 export function initCloud() {
   onAuthStateChanged(auth, (user) => {
     set({ ready: true, user: user && { name: user.displayName, email: user.email, photoUrl: user.photoURL }, error: null })
-    if (user) void syncWorkouts()
+    if (user) void syncCloud()
   })
 }
 
@@ -100,12 +101,12 @@ let running: Promise<void> | null = null
 let rerun = false
 
 /**
- * Une los entrenamientos locales con los de la nube.
+ * Une los datos locales con los de la nube: entrenamientos, descansos, vidas usadas y compradas.
  * Cada entrenamiento se identifica por su startedAt: el id de Dexie cambia entre dispositivos.
  * Las ediciones ganan por updatedAt; los borrados quedan marcados en la nube (`deleted`)
  * para que los otros dispositivos también los quiten.
  */
-export function syncWorkouts(): Promise<void> {
+export function syncCloud(): Promise<void> {
   const user = auth.currentUser
   if (!user) return Promise.resolve()
   if (running) {
@@ -121,7 +122,7 @@ export function syncWorkouts(): Promise<void> {
       set({ syncing: false })
       if (rerun) {
         rerun = false
-        void syncWorkouts()
+        void syncCloud()
       }
     })
   return running
@@ -144,12 +145,7 @@ async function doSync(user: User) {
     const r = remote.get(String(w.startedAt))
     if (!r || (!r.deleted && (w.updatedAt ?? 0) > (r.updatedAt ?? 0))) uploads.push([String(w.startedAt), w])
   }
-  // Firestore limita cada batch a 500 escrituras.
-  for (let i = 0; i < uploads.length; i += 500) {
-    const batch = writeBatch(firestore)
-    for (const [key, data] of uploads.slice(i, i + 500)) batch.set(doc(ref, key), data)
-    await batch.commit()
-  }
+  await upload(ref, uploads)
 
   const toAdd: RemoteWorkout[] = []
   const toDelete: number[] = []
@@ -168,6 +164,39 @@ async function doSync(user: User) {
     await db.workouts.bulkUpdate(toUpdate)
     await db.deletedWorkouts.bulkDelete(deleted.map((d) => d.startedAt))
   })
+
+  await syncTable(user, 'dayMarks', db.dayMarks, (m) => m.epochDay, (m) => m.updatedAt)
+  await syncTable(user, 'lifePurchases', db.lifePurchases, (p) => p.createdAt, (p) => p.createdAt)
+}
+
+/** Une una tabla sencilla: cada registro gana por versión (los borrados viajan como `deleted`). */
+async function syncTable<T extends DocumentData>(
+  user: User,
+  name: string,
+  table: Table<T, number>,
+  keyOf: (item: T) => number,
+  versionOf: (item: T) => number,
+) {
+  const ref = collection(firestore, 'users', user.uid, name)
+  const [snapshot, local] = await Promise.all([getDocsFromServer(ref), table.toArray()])
+  const remote = new Map(snapshot.docs.map((d) => [d.id, d.data() as T]))
+  const localByKey = new Map(local.map((item) => [String(keyOf(item)), item]))
+
+  const newer = (a: T, b: T | undefined) => !b || versionOf(a) > versionOf(b)
+  await upload(
+    ref,
+    local.filter((item) => newer(item, remote.get(String(keyOf(item))))).map((item) => [String(keyOf(item)), item]),
+  )
+  await table.bulkPut([...remote].filter(([key, item]) => newer(item, localByKey.get(key))).map(([, item]) => item))
+}
+
+async function upload(ref: CollectionReference, items: [string, DocumentData][]) {
+  // Firestore limita cada batch a 500 escrituras.
+  for (let i = 0; i < items.length; i += 500) {
+    const batch = writeBatch(firestore)
+    for (const [key, data] of items.slice(i, i + 500)) batch.set(doc(ref, key), data)
+    await batch.commit()
+  }
 }
 
 function errorMessage(e: unknown): string {

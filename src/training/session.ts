@@ -1,6 +1,6 @@
 import type { NormalizedLandmark } from '@mediapipe/tasks-vision'
 import { db, type SetDetail } from '../db'
-import { syncWorkouts } from '../lib/cloud'
+import { syncCloud } from '../lib/cloud'
 import { todayEpochDay } from '../lib/dates'
 import { bestInWindow } from '../lib/records'
 import { speak } from '../lib/voice'
@@ -164,7 +164,7 @@ export class TrainingSession {
       })
       .then((id) => {
         this.set({ savedId: id })
-        void syncWorkouts()
+        void syncCloud()
       })
   }
 
